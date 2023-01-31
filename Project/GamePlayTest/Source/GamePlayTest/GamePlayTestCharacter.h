@@ -37,12 +37,20 @@ class AGamePlayTestCharacter : public ACharacter
 	/** Look Input Action */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	class UInputAction* LookAction;
+
 	/** Interact Input Action */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	class UInputAction* Interact;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Jump, meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditAnywhere, Category = Jump, meta = (AllowPrivateAccess = "true"))
 	int MaxJumps = 0;
+
+	UPROPERTY(EditAnywhere, Category = "Collision")
+	TEnumAsByte<ECollisionChannel> TraceChannelProperty = ECC_Pawn;
+
+	UPROPERTY(EditAnywhere, Category = "Components")
+    class UPhysicsHandleComponent* PhysicsHandle;
+	
 
 public:
 	AGamePlayTestCharacter();
@@ -58,6 +66,8 @@ protected:
 		
 
 protected:
+	
+	bool bIsGrabbing;
 	// APawn interface
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 	
@@ -71,5 +81,12 @@ public:
 	FORCEINLINE class UCameraComponent* GetFollowCamera() const { return FollowCamera; }
 	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent)
 	void BeginInteract();
+	UFUNCTION(BlueprintCallable)
+	void GrabObject( bool ToggleDebug, float Range);
+	UFUNCTION(BlueprintCallable)
+	void ThrowObject();
+	UFUNCTION(BlueprintCallable)
+	void GrabbingLoop(float Range);
+
 };
 

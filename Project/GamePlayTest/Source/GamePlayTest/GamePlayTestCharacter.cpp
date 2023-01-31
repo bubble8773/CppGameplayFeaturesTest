@@ -9,7 +9,11 @@
 #include "GameFramework/SpringArmComponent.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
-//#include "Kismet\KismetSystemLibrary.h"
+#include "Kismet\KismetSystemLibrary.h"
+#include "Engine/World.h"
+#include "PhysicsEngine/PhysicsHandleComponent.h"
+#include "Components/ActorComponent.h"
+
 //#include"IInteractWithObjects.h"
 
 
@@ -51,6 +55,9 @@ AGamePlayTestCharacter::AGamePlayTestCharacter()
 
 	// Note: The skeletal mesh and anim blueprint references on the Mesh component (inherited from Character) 
 	// are set in the derived blueprint asset named ThirdPersonCharacter (to avoid direct content references in C++)
+
+	PhysicsHandle = CreateDefaultSubobject<UPhysicsHandleComponent>(TEXT("PhysicsHandle"));
+	//PhysicsHandle->SetupAttachment(GetRootComponent());
 }
 
 void AGamePlayTestCharacter::BeginPlay()
@@ -67,6 +74,42 @@ void AGamePlayTestCharacter::BeginPlay()
 			//adding double jump
 			JumpMaxCount = MaxJumps;
 		}
+	}
+}
+
+//////////////////////////////////////////////////////////////////////////
+// Grab and throw
+void AGamePlayTestCharacter::GrabObject( bool ToggleDebug, float Range)
+{
+	FVector TraceStart = GetActorLocation();
+	FVector TraceEnd = GetActorLocation() + GetActorForwardVector() * Range;
+	FHitResult HitResult;
+	FCollisionQueryParams TraceParams(FName(TEXT("Trace")), false, GetOwner());
+	GetWorld()->LineTraceSingleByObjectType(HitResult, TraceStart, TraceEnd, FCollisionObjectQueryParams(ECollisionChannel::ECC_PhysicsBody), TraceParams);
+	if(ToggleDebug)
+		DrawDebugLine(GetWorld(), TraceStart, TraceEnd, HitResult.bBlockingHit ? FColor::Blue : FColor::Red, false, 5.0f, 0, 10.0f);
+	UPrimitiveComponent* ComponentToGrab = HitResult.GetComponent();
+	if (ComponentToGrab)
+	{
+		PhysicsHandle->GrabComponent(ComponentToGrab, NAME_None, ComponentToGrab->GetOwner()->GetActorLocation(), true);
+		bIsGrabbing = true;
+	}
+}
+
+void AGamePlayTestCharacter::ThrowObject()
+{
+	if (bIsGrabbing) {
+		PhysicsHandle->ReleaseComponent();
+		bIsGrabbing = false;
+	}
+}
+
+void AGamePlayTestCharacter::GrabbingLoop( float Range)
+{
+	FVector TraceEnd = GetActorLocation() + GetActorForwardVector() * Range;
+	if (bIsGrabbing) {
+		PhysicsHandle->SetTargetLocation(TraceEnd);
+
 	}
 }
 
@@ -128,6 +171,7 @@ void AGamePlayTestCharacter::Look(const FInputActionValue& Value)
 		AddControllerYawInput(LookAxisVector.X);
 		AddControllerPitchInput(LookAxisVector.Y);
 	}
+	
 }
 
 //void AGamePlayTestCharacter::BeginInteract()
