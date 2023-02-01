@@ -14,6 +14,7 @@
 #include "PhysicsEngine/PhysicsHandleComponent.h"
 #include "Components/ActorComponent.h"
 
+
 //#include"IInteractWithObjects.h"
 
 
@@ -147,7 +148,7 @@ void AGamePlayTestCharacter::Look(const FInputActionValue& Value)
 }
 //////////////////////////////////////////////////////////////////////////
 // Grab and throw
-void AGamePlayTestCharacter::GrabObject(bool bUseActorLocation, bool bDebug, float Range)
+UPrimitiveComponent* AGamePlayTestCharacter::GrabObject(bool bUseActorLocation, bool bDebug, float Range)
 {
 	FVector TraceStart;
 	FVector TraceEnd;
@@ -173,12 +174,14 @@ void AGamePlayTestCharacter::GrabObject(bool bUseActorLocation, bool bDebug, flo
 		PhysicsHandle->GrabComponentAtLocationWithRotation(ComponentToGrab, NAME_None, ComponentToGrab->GetOwner()->GetActorLocation(), ComponentToGrab->GetOwner()->GetActorRotation());
 		bIsGrabbing = true;
 	}
+	return ComponentToGrab;
 }
 
-void AGamePlayTestCharacter::ThrowObject()
+void AGamePlayTestCharacter::ThrowObject(UPrimitiveComponent* ComponentToGrab, float Amount)
 {
 	if (bIsGrabbing) {
 		PhysicsHandle->ReleaseComponent();
+		ComponentToGrab->AddImpulse(ComponentToGrab->GetOwner()->GetActorLocation() * Amount);
 		bIsGrabbing = false;
 	}
 }
@@ -206,6 +209,7 @@ void AGamePlayTestCharacter::ToggleFlying(EMovementMode Mode, bool isFlying)
 	bUseControllerRotationYaw = bIsFlying;
 
 }
+
 //void AGamePlayTestCharacter::BeginInteract()
 //{
 //	// Set what actors to seek out from it's collision channel

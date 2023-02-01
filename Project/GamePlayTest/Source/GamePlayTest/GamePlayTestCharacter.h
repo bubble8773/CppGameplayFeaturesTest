@@ -63,8 +63,8 @@ protected:
 
 	/** Called for looking input */
 	void Look(const FInputActionValue& Value);
-		
-
+	
+	
 protected:
 	
 	bool bIsGrabbing;
@@ -74,6 +74,7 @@ protected:
 	
 	// To add mapping context
 	virtual void BeginPlay();
+
 
 public:
 	/** Returns CameraBoom subobject **/
@@ -86,9 +87,9 @@ public:
 
 	//Grab and Throw
 	UFUNCTION(BlueprintCallable)
-	void GrabObject(bool bUseActorLocation, bool bDebug, float Range);
+	UPrimitiveComponent* GrabObject(bool bUseActorLocation, bool bDebug, float Range);
 	UFUNCTION(BlueprintCallable)
-	void ThrowObject();
+	void ThrowObject(UPrimitiveComponent* ComponentToGrab, float Amount);
 	UFUNCTION(BlueprintCallable)
 	void GrabbingLoop(bool bUseActorLocation,float Range);
 
@@ -96,6 +97,7 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void ToggleFlying(EMovementMode Mode, bool isFlying	);
 	
-
+	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent)
+	void UseMasterFeild(FHitResult hit);
 };
 
