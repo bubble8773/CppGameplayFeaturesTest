@@ -68,6 +68,7 @@ protected:
 protected:
 	
 	bool bIsGrabbing;
+	bool bIsFlying;
 	// APawn interface
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 	
@@ -79,14 +80,22 @@ public:
 	FORCEINLINE class USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
 	/** Returns FollowCamera subobject **/
 	FORCEINLINE class UCameraComponent* GetFollowCamera() const { return FollowCamera; }
+	//Interaction 
 	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent)
 	void BeginInteract();
+
+	//Grab and Throw
 	UFUNCTION(BlueprintCallable)
-	void GrabObject( bool ToggleDebug, float Range);
+	void GrabObject(bool bUseActorLocation, bool bDebug, float Range);
 	UFUNCTION(BlueprintCallable)
 	void ThrowObject();
 	UFUNCTION(BlueprintCallable)
-	void GrabbingLoop(float Range);
+	void GrabbingLoop(bool bUseActorLocation,float Range);
+
+	// Flying
+	UFUNCTION(BlueprintCallable)
+	void ToggleFlying(EMovementMode Mode, bool isFlying	);
+	
 
 };
 

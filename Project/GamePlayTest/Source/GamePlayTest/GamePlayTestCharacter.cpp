@@ -52,7 +52,7 @@ AGamePlayTestCharacter::AGamePlayTestCharacter()
 	FollowCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("FollowCamera"));
 	FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName); // Attach the camera to the end of the boom and let the boom adjust to match the controller orientation
 	FollowCamera->bUsePawnControlRotation = false; // Camera does not rotate relative to arm
-
+	
 	// Note: The skeletal mesh and anim blueprint references on the Mesh component (inherited from Character) 
 	// are set in the derived blueprint asset named ThirdPersonCharacter (to avoid direct content references in C++)
 
@@ -79,19 +79,30 @@ void AGamePlayTestCharacter::BeginPlay()
 
 //////////////////////////////////////////////////////////////////////////
 // Grab and throw
-void AGamePlayTestCharacter::GrabObject( bool ToggleDebug, float Range)
+void AGamePlayTestCharacter::GrabObject(bool bUseActorLocation, bool bDebug, float Range)
 {
-	FVector TraceStart = GetActorLocation();
-	FVector TraceEnd = GetActorLocation() + GetActorForwardVector() * Range;
+	FVector TraceStart;
+	FVector TraceEnd; 
+	
+	if (bUseActorLocation)
+	{
+		TraceStart = GetActorLocation();
+		TraceEnd = GetActorLocation() + GetActorForwardVector() * Range;
+	}
+	else
+	{
+		TraceStart = GetFollowCamera()->GetComponentLocation();
+		TraceEnd = TraceStart + GetFollowCamera()->GetForwardVector() * Range;
+	}
 	FHitResult HitResult;
 	FCollisionQueryParams TraceParams(FName(TEXT("Trace")), false, GetOwner());
 	GetWorld()->LineTraceSingleByObjectType(HitResult, TraceStart, TraceEnd, FCollisionObjectQueryParams(ECollisionChannel::ECC_PhysicsBody), TraceParams);
-	if(ToggleDebug)
+	if(bDebug)
 		DrawDebugLine(GetWorld(), TraceStart, TraceEnd, HitResult.bBlockingHit ? FColor::Blue : FColor::Red, false, 5.0f, 0, 10.0f);
 	UPrimitiveComponent* ComponentToGrab = HitResult.GetComponent();
 	if (ComponentToGrab)
 	{
-		PhysicsHandle->GrabComponent(ComponentToGrab, NAME_None, ComponentToGrab->GetOwner()->GetActorLocation(), true);
+		PhysicsHandle->GrabComponentAtLocationWithRotation(ComponentToGrab, NAME_None, ComponentToGrab->GetOwner()->GetActorLocation(), ComponentToGrab->GetOwner()->GetActorRotation());
 		bIsGrabbing = true;
 	}
 }
@@ -104,13 +115,27 @@ void AGamePlayTestCharacter::ThrowObject()
 	}
 }
 
-void AGamePlayTestCharacter::GrabbingLoop( float Range)
+void AGamePlayTestCharacter::GrabbingLoop(bool bUseActorLocation,float Range)
 {
-	FVector TraceEnd = GetActorLocation() + GetActorForwardVector() * Range;
+	FVector TraceEnd;
+	if(bUseActorLocation)
+		TraceEnd = GetActorLocation() + GetActorForwardVector() * Range;
+	else 
+		TraceEnd = GetFollowCamera()->GetComponentLocation()+
+		GetFollowCamera()->GetForwardVector() * Range;
+		
 	if (bIsGrabbing) {
 		PhysicsHandle->SetTargetLocation(TraceEnd);
-
 	}
+}
+
+void AGamePlayTestCharacter::ToggleFlying(EMovementMode Mode, bool isFlying)
+{
+	bIsFlying = isFlying;
+	GetCharacterMovement()->SetMovementMode(Mode);
+	bUseControllerRotationPitch = bIsFlying;
+	bUseControllerRotationYaw = bIsFlying;
+		
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -144,19 +169,25 @@ void AGamePlayTestCharacter::Move(const FInputActionValue& Value)
 
 	if (Controller != nullptr)
 	{
-		// find out which way is forward
-		const FRotator Rotation = Controller->GetControlRotation();
-		const FRotator YawRotation(0, Rotation.Yaw, 0);
+		if (GetCharacterMovement()->CanEverFly()) {
+			AddMovementInput(GetFollowCamera()->GetForwardVector(), MovementVector.Y, false);
+			AddMovementInput(GetFollowCamera()->GetRightVector(), MovementVector.X, false);
+		}
+		else {
+			// find out which way is forward
+			const FRotator Rotation = Controller->GetControlRotation();
+			const FRotator YawRotation(0, Rotation.Yaw, 0);
 
-		// get forward vector
-		const FVector ForwardDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
-	
-		// get right vector 
-		const FVector RightDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
+			// get forward vector
+			const FVector ForwardDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
 
-		// add movement 
-		AddMovementInput(ForwardDirection, MovementVector.Y);
-		AddMovementInput(RightDirection, MovementVector.X);
+			// get right vector 
+			const FVector RightDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
+
+			// add movement 
+			AddMovementInput(ForwardDirection, MovementVector.Y);
+			AddMovementInput(RightDirection, MovementVector.X);
+		}
 	}
 }
 
