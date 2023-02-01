@@ -77,66 +77,7 @@ void AGamePlayTestCharacter::BeginPlay()
 	}
 }
 
-//////////////////////////////////////////////////////////////////////////
-// Grab and throw
-void AGamePlayTestCharacter::GrabObject(bool bUseActorLocation, bool bDebug, float Range)
-{
-	FVector TraceStart;
-	FVector TraceEnd; 
-	
-	if (bUseActorLocation)
-	{
-		TraceStart = GetActorLocation();
-		TraceEnd = GetActorLocation() + GetActorForwardVector() * Range;
-	}
-	else
-	{
-		TraceStart = GetFollowCamera()->GetComponentLocation();
-		TraceEnd = TraceStart + GetFollowCamera()->GetForwardVector() * Range;
-	}
-	FHitResult HitResult;
-	FCollisionQueryParams TraceParams(FName(TEXT("Trace")), false, GetOwner());
-	GetWorld()->LineTraceSingleByObjectType(HitResult, TraceStart, TraceEnd, FCollisionObjectQueryParams(ECollisionChannel::ECC_PhysicsBody), TraceParams);
-	if(bDebug)
-		DrawDebugLine(GetWorld(), TraceStart, TraceEnd, HitResult.bBlockingHit ? FColor::Blue : FColor::Red, false, 5.0f, 0, 10.0f);
-	UPrimitiveComponent* ComponentToGrab = HitResult.GetComponent();
-	if (ComponentToGrab)
-	{
-		PhysicsHandle->GrabComponentAtLocationWithRotation(ComponentToGrab, NAME_None, ComponentToGrab->GetOwner()->GetActorLocation(), ComponentToGrab->GetOwner()->GetActorRotation());
-		bIsGrabbing = true;
-	}
-}
 
-void AGamePlayTestCharacter::ThrowObject()
-{
-	if (bIsGrabbing) {
-		PhysicsHandle->ReleaseComponent();
-		bIsGrabbing = false;
-	}
-}
-
-void AGamePlayTestCharacter::GrabbingLoop(bool bUseActorLocation,float Range)
-{
-	FVector TraceEnd;
-	if(bUseActorLocation)
-		TraceEnd = GetActorLocation() + GetActorForwardVector() * Range;
-	else 
-		TraceEnd = GetFollowCamera()->GetComponentLocation()+
-		GetFollowCamera()->GetForwardVector() * Range;
-		
-	if (bIsGrabbing) {
-		PhysicsHandle->SetTargetLocation(TraceEnd);
-	}
-}
-
-void AGamePlayTestCharacter::ToggleFlying(EMovementMode Mode, bool isFlying)
-{
-	bIsFlying = isFlying;
-	GetCharacterMovement()->SetMovementMode(Mode);
-	bUseControllerRotationPitch = bIsFlying;
-	bUseControllerRotationYaw = bIsFlying;
-		
-}
 
 //////////////////////////////////////////////////////////////////////////
 // Input
@@ -204,7 +145,67 @@ void AGamePlayTestCharacter::Look(const FInputActionValue& Value)
 	}
 	
 }
+//////////////////////////////////////////////////////////////////////////
+// Grab and throw
+void AGamePlayTestCharacter::GrabObject(bool bUseActorLocation, bool bDebug, float Range)
+{
+	FVector TraceStart;
+	FVector TraceEnd;
 
+	if (bUseActorLocation)
+	{
+		TraceStart = GetActorLocation();
+		TraceEnd = GetActorLocation() + GetActorForwardVector() * Range;
+	}
+	else
+	{
+		TraceStart = GetFollowCamera()->GetComponentLocation();
+		TraceEnd = TraceStart + GetFollowCamera()->GetForwardVector() * Range;
+	}
+	FHitResult HitResult;
+	FCollisionQueryParams TraceParams(FName(TEXT("Trace")), false, GetOwner());
+	GetWorld()->LineTraceSingleByObjectType(HitResult, TraceStart, TraceEnd, FCollisionObjectQueryParams(ECollisionChannel::ECC_PhysicsBody), TraceParams);
+	if (bDebug)
+		DrawDebugLine(GetWorld(), TraceStart, TraceEnd, HitResult.bBlockingHit ? FColor::Blue : FColor::Red, false, 5.0f, 0, 10.0f);
+	UPrimitiveComponent* ComponentToGrab = HitResult.GetComponent();
+	if (ComponentToGrab)
+	{
+		PhysicsHandle->GrabComponentAtLocationWithRotation(ComponentToGrab, NAME_None, ComponentToGrab->GetOwner()->GetActorLocation(), ComponentToGrab->GetOwner()->GetActorRotation());
+		bIsGrabbing = true;
+	}
+}
+
+void AGamePlayTestCharacter::ThrowObject()
+{
+	if (bIsGrabbing) {
+		PhysicsHandle->ReleaseComponent();
+		bIsGrabbing = false;
+	}
+}
+
+void AGamePlayTestCharacter::GrabbingLoop(bool bUseActorLocation, float Range)
+{
+	FVector TraceEnd;
+	if (bUseActorLocation)
+		TraceEnd = GetActorLocation() + GetActorForwardVector() * Range;
+	else
+		TraceEnd = GetFollowCamera()->GetComponentLocation() +
+		GetFollowCamera()->GetForwardVector() * Range;
+
+	if (bIsGrabbing) {
+		PhysicsHandle->SetTargetLocation(TraceEnd);
+	}
+}
+
+//Flying
+void AGamePlayTestCharacter::ToggleFlying(EMovementMode Mode, bool isFlying)
+{
+	bIsFlying = isFlying;
+	GetCharacterMovement()->SetMovementMode(Mode);
+	bUseControllerRotationPitch = bIsFlying;
+	bUseControllerRotationYaw = bIsFlying;
+
+}
 //void AGamePlayTestCharacter::BeginInteract()
 //{
 //	// Set what actors to seek out from it's collision channel
