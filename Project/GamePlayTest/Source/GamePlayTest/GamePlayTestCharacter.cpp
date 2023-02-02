@@ -181,7 +181,7 @@ void AGamePlayTestCharacter::ThrowObject(UPrimitiveComponent* ComponentToGrab, f
 {
 	if (bIsGrabbing) {
 		PhysicsHandle->ReleaseComponent();
-		ComponentToGrab->AddImpulse(ComponentToGrab->GetOwner()->GetActorLocation() * Amount);
+		ComponentToGrab->AddImpulse(GetFollowCamera()->GetForwardVector() * Amount);
 		bIsGrabbing = false;
 	}
 }
@@ -201,9 +201,8 @@ void AGamePlayTestCharacter::GrabbingLoop(bool bUseActorLocation, float Range)
 }
 
 //Flying
-void AGamePlayTestCharacter::ToggleFlying(EMovementMode Mode, bool isFlying)
+void AGamePlayTestCharacter::ToggleFlying(EMovementMode Mode, bool bIsFlying)
 {
-	bIsFlying = isFlying;
 	GetCharacterMovement()->SetMovementMode(Mode);
 	bUseControllerRotationPitch = bIsFlying;
 	bUseControllerRotationYaw = bIsFlying;

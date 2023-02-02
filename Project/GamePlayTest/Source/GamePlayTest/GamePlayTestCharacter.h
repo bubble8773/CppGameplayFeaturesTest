@@ -68,7 +68,7 @@ protected:
 protected:
 	
 	bool bIsGrabbing;
-	bool bIsFlying;
+	
 	// APawn interface
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 	
@@ -95,7 +95,7 @@ public:
 
 	// Flying
 	UFUNCTION(BlueprintCallable)
-	void ToggleFlying(EMovementMode Mode, bool isFlying	);
+	void ToggleFlying(EMovementMode Mode, bool bIsFlying	);
 	
 	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent)
 	void UseMasterFeild(FHitResult hit);
